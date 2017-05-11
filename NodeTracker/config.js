@@ -1,0 +1,5 @@
+var MATCHMAKING_PORT = 9009;
+
+module.exports = {
+    MATCHMAKING_PORT: MATCHMAKING_PORT
+};

@@ -5,7 +5,9 @@ const expressWs = require('express-ws')(app);
 
 const conf = require('./config.js');
 const browser = require('./browser.js');
+const node_comms = require('./node_communication.js');
 const GameManager = require('./game_logic.js');
+
 
 // Setup game
 let id = 'test_id';
@@ -33,18 +35,24 @@ app.ws('/', function (ws, req) {
                 browser.linkingFunctionality(ws, inputs, game_state);
             }
             else if (data.header.type === 'start_game') {
-                chord.insertFunctionality(ws, data, inputs, game_state);
+                node_comms.insertFunctionality(ws, data, inputs, game_state);
             }
             else if (data.header.type === 'ready') {
                 log('    └ connecting to matchmaking');
             
-                match_making_socket = new WebSocket('ws://localhost:9009');
+                match_making_socket = new WebSocket('ws://192.168.56.1:9009');
                 match_making_socket.on('open', function() {
                     log('-> Connected to matchmaking: ');
                     match_making_socket.send(JSON.stringify({ header: { type: 'ready_for_game' }, body: conf.SERVER_PORT }));
                 });
                 match_making_socket.on('message', function (data, flags) {
                     log('-> Incoming message from matchmaking: ' + data);
+
+                    // Something is coming from matchmaking, it must be a confirmed match
+                    log('    └ connecting to designated opponent: ' + data.body.address + ':' + data.body.port);
+                    opponent_socket = new WebSocket('ws://' + data.body.address + ':' + data.body.port);
+                    node_comms.defineCommunicationSocketCallbacks(opponent_socket);
+
                 });
                 match_making_socket.on('close', function () {
                     log('-> Connection broken from: ' + ws._socket.remoteAddress);

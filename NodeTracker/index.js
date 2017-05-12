@@ -24,10 +24,10 @@ app.ws('/', function (ws, req) {
         if ('header' in data && 'type' in data.header) {
             if (data.header.type === 'ready_for_game') {
                 if (ready_nodes.length > 0) {
-                    log('   ├ one player is already waiting for a match, confirming match');
+                    log('    ├ one player is already waiting for a match, confirming match');
 
                     const message = new Message(undefined, 'match_found', JSON.stringify(ready_nodes[0]));
-                    log('<- └ sending node information ');
+                    log('<-  └ sending node information ');
                     ws.send(message.toJson());
                 }
                 else {

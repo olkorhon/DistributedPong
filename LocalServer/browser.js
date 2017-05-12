@@ -2,7 +2,6 @@
 const WebSocket = require('ws');
 
 const conf = require('./config.js');
-const GameManager = require('./game_logic.js');
 
 let silence_input = true;
 let silence_state = true;
@@ -13,14 +12,13 @@ let input_socket;
 let state_socket;
 
 let id = 'test_id';
+let inputs = undefined;
 
-// Setup game
-let game_manager = new GameManager();
-game_manager.getCurrentState().addPlayer(id, 'rgb(64, 208, 64)');
-log(game_manager.getCurrentState().toJson());
-
-let linkingFunctionality = function (ws, input) {
+let linkingFunctionality = function (ws, input, game_state) {
     log('    └ message recognized to be a linking request');
+
+    inputs = input;
+    game_state = game_state;
 
     // Create socket server for input
     if (!input_socket_server) {
@@ -34,7 +32,7 @@ let linkingFunctionality = function (ws, input) {
                 log('-> Input data received from: ' + state_socket.upgradeReq.connection.remoteAddress, silence_input);
                 log('    ├ message: ' + msg, silence_input);
 
-                input[id] = msg;
+                inputs[id] = msg;
 
                 log('    └ input processing finished', silence_input);
             });
@@ -64,7 +62,7 @@ let linkingFunctionality = function (ws, input) {
                 log('-> Input disconnected from: ' + state_socket.upgradeReq.connection.remoteAddress);
             });
 
-            startTickLoop(10, state_socket);
+            startTickLoop(1, state_socket, game_state);
         });
     } else {
         log('W      ├ socket server for status already initiated');
@@ -88,15 +86,14 @@ function pollForInput(socket) {
     setTimeout(pollForInput, 1000, socket);
 }
 
-function startTickLoop(tick_rate, socket) {
-    tick_delay = 1000 / tick_rate;
-    setTimeout(advanceTick, tick_delay, current_input, socket, game_manager.getCurrentState());
+function startTickLoop(tick_rate, socket, game_state) {
+    var delay = 1000 / tick_rate;
+    setTimeout(advanceTick, delay, delay, socket, game_state);
 }
 
-function advanceTick(inputs, socket, game_state) {
-    game_state.advanceTick(inputs);
+function advanceTick(delay, socket, game_state) {
     sendGameState(socket, game_state);
-    setTimeout(advanceTick, 1000, current_input, socket, game_state);
+    setTimeout(advanceTick, delay, delay, socket, game_state);
 }
 
 function sendGameState(socket, game_state) {

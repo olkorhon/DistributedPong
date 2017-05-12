@@ -9,7 +9,7 @@ let id = 'test_id';
 let opponent_socket_server;
 let opponent_socket;
 
-let insertFunctionality = function (ws, data, input) {
+let insertFunctionality = function (ws, data, inputs, game_state) {
     log('    └ message recognized to be a matchmaking request');
 
     if (!opponent_socket) {
@@ -32,11 +32,10 @@ let insertFunctionality = function (ws, data, input) {
                             log('    ├ opponent is passing processing turn to this node');
 
                             if ('body' in data) {
-                                game_state = new GameState();
                                 game_state.fromJson(data.body);
 
                                 log('    ├ advancing game state with one tick');
-                                game_state.advanceTick(input);
+                                game_state.advanceTick(inputs);
 
                                 const message = new Message(id, 'pass_tick', game_state.toJson());
                                 log('<-  ├ sending new state to opponent');

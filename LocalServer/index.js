@@ -4,10 +4,17 @@ const app = express();
 const expressWs = require('express-ws')(app);
 
 const conf = require('./config.js');
-
 const browser = require('./browser.js');
+const GameManager = require('./game_logic.js');
 
-const input = {};
+// Setup game
+let id = 'test_id';
+let game_manager = new GameManager();
+game_manager.getCurrentState().addPlayer(id, 'rgb(64, 208, 64)');
+let game_state = game_manager.getCurrentState();
+log(game_manager.getCurrentState().toJson());
+
+const inputs = {};
 
 // Serve relevant files for convenience
 log('Serving public files');
@@ -23,10 +30,10 @@ app.ws('/', function (ws, req) {
         const data = JSON.parse(msg);
         if ('header' in data && 'type' in data.header) {
             if (data.header.type === 'IO_link') {
-                browser.linkingFunctionality(ws, input);
+                browser.linkingFunctionality(ws, inputs, game_state);
             }
             else if (data.header.type === 'start_game') {
-                chord.insertFunctionality(ws, data, input);
+                chord.insertFunctionality(ws, data, inputs, game_state);
             }
             else if (data.header.type === 'ready') {
                 log('    └ connecting to matchmaking');

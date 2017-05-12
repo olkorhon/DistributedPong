@@ -6,8 +6,7 @@ const expressWs = require('express-ws')(app);
 const conf = require('./config.js');
 const Message = require('./Message.js');
 
-const ready_nodes = [];
-
+let ready_nodes = [];
 
 // Serve relevant files for convenience
 log('Serving public files');
@@ -26,14 +25,27 @@ app.ws('/', function (ws, req) {
                 if (ready_nodes.length > 0) {
                     log('    ├ one player is already waiting for a match, confirming match');
 
-                    const message = new Message(undefined, 'match_found', JSON.stringify(ready_nodes[0]));
+                    let another_node = ready_nodes[0];
+                    ready_nodes= ready_nodes.splice(0, 1);
+
+                    log('    ├ ADDRESS: ' + another_node.address);
+                    log('    ├ PORT   : ' + another_node.port);
+
+                    const message = new Message(undefined, 'match_found', JSON.stringify(another_node));
                     log('<-  └ sending node information ');
                     ws.send(message.toJson());
                 }
                 else {
                     log('    ├ not enough players for game yet, saving players address');
+
+                    let complete_address = ws._socket.remoteAddress;
+                    let relevant_address = complete_address.split(':').slice(-1)[0];
+
+                    log('    ├ ADDRESS: ' + relevant_address);
+                    log('    ├ PORT   : ' + data.body);
+
                     ready_nodes.push({
-                        address: ws._socket.remoteAddress,
+                        address: relevant_address,
                         port: data.body
                     });
                     log('    └ terminating connection');

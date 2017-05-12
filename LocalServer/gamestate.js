@@ -9,7 +9,11 @@ function GameState()
 	this.current_players = 0;
     this.arcs = {};
     this.paddles = {};
-	
+
+    this.playerIsInGame = function (id) {
+        return id in self.paddles;
+    }
+
 	this.addPlayer = function(id, color)
     {
 		paddle = { direction  : 0,
@@ -67,8 +71,6 @@ function GameState()
         for (input in inputs) {
             // Input 1 means left
             if (inputs[input] == 1) {
-                console.log(input);
-                console.log(self.toJson());
                 if (self.paddles[input].cur_offset - 0.01 < 0.0) {
                     self.paddles[input].cur_offset = 0.0;
                 } else {

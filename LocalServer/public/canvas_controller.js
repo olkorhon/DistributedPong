@@ -27,6 +27,8 @@ function prepareCanvas(game_settings, used_canvas)
     } else {
         console.log('Canvas has no context, CANNOT display anything!');
     }
+
+    context.font = "16px Comic Sans MS";
 }
 
 function refreshStatus(game_state) {
@@ -49,9 +51,12 @@ function refreshStatus(game_state) {
 
     // Draw paddles
     for (var key in game_state.paddles) {
-		drawPaddle(context, game_state.arcs[key], game_state.paddles[key]);
+		drawPaddle(context, key, game_state.arcs[key], game_state.paddles[key]);
 	}
-	
+
+    // Draw ball
+    drawBall(context, game_state.ball_pos, game_state.ball_color);
+
 	context.restore();
 }
 
@@ -64,7 +69,7 @@ function drawArc(context, arc) {
 }
 
 // Draws a paddle out to the canvas on a specific arc
-function drawPaddle(context, arc, paddle) {
+function drawPaddle(context, id, arc, paddle) {
 	// Save status before translating
 	context.save();
 	
@@ -75,14 +80,27 @@ function drawPaddle(context, arc, paddle) {
 	// Rotate and draw a rectangle
     context.rotate(pad_angle + Math.PI / 2);
 	context.fillStyle = paddle.color;
-	context.fillRect(-paddle.width / 2, 0, paddle.width, paddle.height);		
+    context.fillRect(-paddle.width / 2, -paddle.height / 2, paddle.width, paddle.height);		
 
-	// Draw a circle on 
-	context.beginPath();
-	context.arc(0,0,6,0, Math.PI * 2);
-	context.fillStyle = 'rgb(0, 0, 0)';
-	context.fill();
+    context.fillStyle = 'rgb(0, 0, 0)';
+    context.textAlign = 'center';
+
+    context.fillText(id, 0, 5);
+    context.fillText(paddle.score.toString(), 0, -10);
 
 	// Restore saved status
 	context.restore();
+}
+
+// Draws a ball in the defined position
+function drawBall(context, ball_pos, color) {
+    // Save status before translating
+    context.save();
+
+    context.fillStyle = color;
+    context.translate(ball_pos[0] * (arena_radius - 15), ball_pos[1] * (arena_radius - 15));
+    context.fillRect(-5, -5, 10, 10);
+
+    // Restore saved status
+    context.restore();
 }

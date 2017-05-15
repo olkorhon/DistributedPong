@@ -12,15 +12,14 @@ let state_socket_server;
 let input_socket;
 let state_socket;
 
-let id = 'test_id';
 let inputs = undefined;
+let game_state = undefined;
 
-let linkingFunctionality = function (ws, input, game_state) {
+let linkingFunctionality = function (ws, context) {
+    inputs = context.inputs;
+    game_state = context.game_state;
+
     Logger.log('    └ message recognized to be a linking request');
-
-    inputs = input;
-    game_state = game_state;
-
     // Create socket server for input
     if (!input_socket_server) {
         Logger.log('       ├ creating end point for input polling');
@@ -33,14 +32,14 @@ let linkingFunctionality = function (ws, input, game_state) {
                 Logger.log('-> Input data received from: ' + state_socket.upgradeReq.connection.remoteAddress, silence_input);
                 Logger.log('    ├ message: ' + msg, silence_input);
 
-                inputs[id] = msg;
+                inputs[conf.MY_ID] = msg;
 
                 Logger.log('    └ input processing finished\n', silence_input);
             });
             input_socket.on('close', function () {
                 Logger.log('-> State disconnected from: ' + state_socket.upgradeReq.connection.remoteAddress);
             });
-            setTimeout(pollForInput, 100, input_socket);
+            setTimeout(pollForInput, conf.BROWSER_INPUT_POLL_DELAY, input_socket);
         });
     } else {
         Logger.log('W      ├ socket server for input already initiated');
@@ -63,7 +62,7 @@ let linkingFunctionality = function (ws, input, game_state) {
                 Logger.log('-> Input disconnected from: ' + state_socket.upgradeReq.connection.remoteAddress);
             });
 
-            startTickLoop(1, state_socket, game_state);
+            startTickLoop(state_socket, game_state);
         });
     } else {
         Logger.log('W      ├ socket server for status already initiated');
@@ -83,18 +82,21 @@ function pollForInput(socket) {
     // Different types of requests
     // 0: no data needed, just send the most recent input status
     // 1: undefined
-    socket.send("0");
-    setTimeout(pollForInput, 100, socket);
+    if (socket.readyState === 1) {
+        socket.send("0");
+        setTimeout(pollForInput, conf.BROWSER_INPUT_POLL_DELAY, socket);
+    }
 }
 
-function startTickLoop(tick_rate, socket, game_state) {
-    var delay = 100 / tick_rate;
-    setTimeout(advanceTick, delay, delay, socket, game_state);
+function startTickLoop(socket, game_state) {
+    setTimeout(advanceTick, conf.BROWSER_STATE_REFRESH_DELAY, socket, game_state);
 }
 
-function advanceTick(delay, socket, game_state) {
-    sendGameState(socket, game_state);
-    setTimeout(advanceTick, delay, delay, socket, game_state);
+function advanceTick(socket, game_state) {
+    if (socket.readyState === 1) {
+        sendGameState(socket, game_state);
+        setTimeout(advanceTick, conf.BROWSER_STATE_REFRESH_DELAY, socket, game_state);
+    }
 }
 
 function sendGameState(socket, game_state) {
